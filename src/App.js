@@ -1,5 +1,4 @@
-// src/App.js
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Modal from "react-modal";
 
@@ -11,9 +10,9 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
   const [workflows, setWorkflows] = useState([]);
-  const [refreshKey, setRefreshKey] = useState(0); // to trigger refresh
+  const [tasks, setTasks] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // open modal with optional workflow to edit
   const openModal = (workflow = null) => {
     setSelectedWorkflow(workflow);
     setModalOpen(true);
@@ -24,135 +23,159 @@ export default function App() {
     setModalOpen(false);
   };
 
-  // fetch workflows from backend
   const fetchWorkflows = async () => {
     try {
       const res = await axios.get("http://localhost:5000/workflow/list");
       setWorkflows(res.data || []);
     } catch (err) {
-      console.error("Failed to fetch workflows:", err);
+      console.error(err);
+      alert("Failed to fetch workflows!");
     }
   };
 
-  // refresh workflows whenever refreshKey changes
   useEffect(() => {
     fetchWorkflows();
   }, [refreshKey]);
 
-  // callback to trigger refresh after save/update/delete
-  const handleRefresh = () => setRefreshKey(prev => prev + 1);
+  const handleRefresh = () => setRefreshKey(k => k + 1);
 
+  // ----- WORKFLOW ACTIONS -----
+  const deleteWorkflow = async (workflow) => {
+    if (!window.confirm(`Delete workflow "${workflow.name}"?`)) return;
+    try {
+      await axios.delete(`http://localhost:5000/workflow/${workflow.id}`);
+      alert(`Workflow "${workflow.name}" deleted`);
+      handleRefresh();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete workflow!");
+    }
+  };
+
+  const deployWorkflow = async (workflow) => {
+    try {
+      await axios.post(`http://localhost:5000/workflow/deploy`, { id: workflow.id });
+      alert(`Workflow "${workflow.name}" deployed successfully!`);
+    } catch (err) {
+      console.error(err.response || err);
+      alert("Deployment failed! Make sure backend route exists.");
+    }
+  };
+
+  const startWorkflow = async (workflow) => {
+    try {
+      await axios.post(`http://localhost:5000/workflow/start`, { id: workflow.id });
+      alert(`Workflow "${workflow.name}" started!`);
+      fetchTasks();
+    } catch (err) {
+      console.error(err.response || err);
+      alert("Failed to start workflow!");
+    }
+  };
+
+  const fetchTasks = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/workflow/tasks");
+      setTasks(res.data || []);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to fetch tasks!");
+    }
+  };
+
+  const completeTask = async (task) => {
+    try {
+      await axios.post(`http://localhost:5000/workflow/tasks/${task.id}/approve`);
+      alert(`Task "${task.name}" completed!`);
+      fetchTasks();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to complete task!");
+    }
+  };
+
+  // ----- UI -----
   return (
-    <div style={{ padding: 20, fontFamily: "Arial" }}>
-      <h1 style={{ textAlign: "center" }}>Onboarding Workflows</h1>
+    <div style={{ padding: 24, fontFamily: "Inter, Arial, sans-serif" }}>
+      <h1>Workflow Demo</h1>
+      <p>Design, deploy, and execute workflows interactively.</p>
 
-      <div style={{ marginTop: 20 }}>
-        <button
-          onClick={() => openModal()}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#4caf50",
-            color: "#fff",
-            border: "none",
-            borderRadius: 4,
-            cursor: "pointer",
-            marginBottom: 20,
-          }}
-        >
-          New Workflow
+      {/* Workflows List */}
+      <div style={{ marginBottom: 24 }}>
+        <h2>Workflows</h2>
+        <button onClick={() => openModal(null)} style={{ marginBottom: 12 }}>
+          + New Workflow
         </button>
-
-        <WorkflowTable workflows={workflows} onEdit={openModal} onRefresh={handleRefresh} />
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead style={{ background: "#f5f5f5" }}>
+            <tr>
+              <th style={{ padding: 8, border: "1px solid #ddd" }}>ID</th>
+              <th style={{ padding: 8, border: "1px solid #ddd" }}>Name</th>
+              <th style={{ padding: 8, border: "1px solid #ddd" }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {workflows.map((wf) => (
+              <tr key={wf.id}>
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>{wf.id}</td>
+                <td style={{ padding: 8, border: "1px solid #ddd", fontWeight: 500 }}>{wf.name}</td>
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>
+                  <button onClick={() => openModal(wf)} style={{ marginRight: 6 }}>Edit</button>
+                  <button onClick={() => deleteWorkflow(wf)} style={{ marginRight: 6 }}>Delete</button>
+                  <button onClick={() => deployWorkflow(wf)} style={{ marginRight: 6 }}>Deploy</button>
+                  <button onClick={() => startWorkflow(wf)}>Start</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
+      {/* Tasks Table */}
+      <div style={{ marginTop: 32 }}>
+        <h2>Pending Tasks</h2>
+        <button onClick={fetchTasks} style={{ marginBottom: 12 }}>Refresh Tasks</button>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead style={{ background: "#f5f5f5" }}>
+            <tr>
+              <th style={{ padding: 8, border: "1px solid #ddd" }}>Task Name</th>
+              <th style={{ padding: 8, border: "1px solid #ddd" }}>Candidate Group</th>
+              <th style={{ padding: 8, border: "1px solid #ddd" }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map((task) => (
+              <tr key={task.id}>
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>{task.name}</td>
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>{task.candidateGroup}</td>
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>
+                  <button onClick={() => completeTask(task)}>Complete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* BPMN Editor Modal */}
       <Modal
         isOpen={modalOpen}
         onRequestClose={closeModal}
         style={{
-          content: {
-            top: "50%",
-            left: "50%",
-            right: "auto",
-            bottom: "auto",
-            transform: "translate(-50%, -50%)",
-            width: "90%",
-            height: "90%",
-            padding: 20,
-          },
+          content: { inset: "5%", padding: 20, borderRadius: 8, display: "flex", flexDirection: "column" },
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <h2>{selectedWorkflow ? `Edit: ${selectedWorkflow.name}` : "New Workflow"}</h2>
-          <button onClick={closeModal} style={{ cursor: "pointer", fontSize: 18 }}>✖</button>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+          <h2>{selectedWorkflow ? "Edit Workflow" : "New Workflow"}</h2>
+          <button onClick={closeModal}>✕</button>
         </div>
-        <div style={{ marginTop: 10, height: "90%" }}>
-          <BpmnEditor workflow={selectedWorkflow} onSaved={() => { handleRefresh(); closeModal(); }} />
+        <div style={{ flex: 1 }}>
+          <BpmnEditor
+            workflow={selectedWorkflow || undefined}
+            onSaved={() => { handleRefresh(); closeModal(); }}
+          />
         </div>
       </Modal>
     </div>
-  );
-}
-
-// workflow table component
-function WorkflowTable({ workflows, onEdit, onRefresh }) {
-  const deleteWorkflow = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5000/workflow/${id}`);
-      onRefresh(); // refresh table after delete
-    } catch (err) {
-      console.error("Failed to delete workflow:", err);
-      alert("Delete failed");
-    }
-  };
-
-  if (!workflows || workflows.length === 0) return <div>No workflows found.</div>;
-
-  return (
-    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-      <thead>
-        <tr>
-          <th style={{ border: "1px solid #ddd", padding: 8 }}>ID</th>
-          <th style={{ border: "1px solid #ddd", padding: 8 }}>Name</th>
-          <th style={{ border: "1px solid #ddd", padding: 8 }}>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {workflows.map((wf) => (
-          <tr key={wf.id}>
-            <td style={{ border: "1px solid #ddd", padding: 8 }}>{wf.id}</td>
-            <td style={{ border: "1px solid #ddd", padding: 8 }}>{wf.name}</td>
-            <td style={{ border: "1px solid #ddd", padding: 8 }}>
-              <button
-                onClick={() => onEdit(wf)}
-                style={{
-                  padding: "4px 8px",
-                  marginRight: 4,
-                  backgroundColor: "#2196f3",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                }}
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => deleteWorkflow(wf.id)}
-                style={{
-                  padding: "4px 8px",
-                  backgroundColor: "#f44336",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                }}
-              >
-                Delete
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
   );
 }

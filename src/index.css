@@ -1,0 +1,144 @@
+/* ===== Page ===== */
+.page {
+  padding: 30px;
+  font-family: Inter, Arial, sans-serif;
+  background: #f6f8fb;
+  min-height: 100vh;
+}
+
+/* ===== Header ===== */
+.header {
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.header p {
+  margin: 0;
+  color: #666;
+}
+
+/* ===== Card ===== */
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  padding: 24px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* ===== Buttons ===== */
+.btn-primary {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #1565c0;
+}
+
+.btn-edit {
+  padding: 4px 10px;
+  margin-right: 8px;
+  border: 1px solid #1976d2;
+  background: #fff;
+  color: #1976d2;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-edit:hover {
+  background: #e3f2fd;
+}
+
+.btn-delete {
+  padding: 4px 10px;
+  border: 1px solid #e53935;
+  background: #fff;
+  color: #e53935;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  background: #fdecea;
+}
+
+/* ===== Table ===== */
+.workflow-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.workflow-table thead tr {
+  background: #f5f7fa;
+}
+
+.workflow-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: #555;
+  font-weight: 600;
+}
+
+.workflow-table td {
+  padding: 10px 12px;
+  color: #333;
+}
+
+.workflow-table tbody tr {
+  border-bottom: 1px solid #eee;
+}
+
+.workflow-table tbody tr:hover {
+  background: #fafafa;
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  padding: 20px;
+  color: #777;
+  text-align: center;
+}
+
+/* ===== Modal ===== */
+.modal-header {
+  height: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+}
+
+.modal-close {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+}
+.workflow-table th:nth-child(1),
+.workflow-table td:nth-child(1) {
+  width: 260px; /* ID column ki width kam kar di */
+}
+.workflow-table th:nth-child(3),
+.workflow-table td:nth-child(3) {
+  width: 260px; /* buttons ke liye enough space */
+}
+.workflow-table th:nth-child(2),
+.workflow-table td:nth-child(2) {
+  width: 160px; /* buttons ke liye enough space */
+}
